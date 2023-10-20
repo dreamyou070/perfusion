@@ -103,9 +103,10 @@ def main(opt):
     print(f' (10.1) base prompt data : {data}')
 
     print(f' (10.2) prompts with placeholder word')
-
     placeholders = list(model.embedding_manager.string_to_token_dict.keys())
     superclasses = model.embedding_manager.initializer_words
+    print(f' - placeholders : {placeholders}')
+    print(f' - superclasses : {superclasses}')
     data_concept = list()
     data_superclass = list()
 
