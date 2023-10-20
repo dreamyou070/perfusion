@@ -93,17 +93,18 @@ class Perfusion(LatentDiffusion):
         # 'global_step',
 
         self.C_inv.data = sd['C_inv']
-        print(f'self.C_inv.data : {self.C_inv.data}')
+        print(f'self.C_inv.data : {self.C_inv.data.shape}')
 
         self.target_input.data = sd['target_input']
 
 
         self.embedding_manager.load_state_dict(sd['embedding'])
         pretrained_embedding = sd['embedding']
-        print(f"sd['embedding'] : {type(pretrained_embedding)}")
+        
+        print(f"sd['embedding'] : {pretrained_embedding.keys()}")
 
 
-        # loading net Unet ... 
+        # loading net Unet ...
         self.model.diffusion_model.load_state_dict(sd['target_output'],
                                                    strict=False)
 
