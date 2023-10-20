@@ -12,8 +12,9 @@ def load_model_from_config(config,
                            ckpt,
                            personalized_ckpt,
                            verbose=False):
+
+    # model class name = Perfusion
     model = instantiate_from_config(config.model)
-    print(f'model : {model.__class__.__name__}')
     print(f"Loading model from {ckpt} and {personalized_ckpt}")
     print(f' [1] loading basic ckpt')
     pl_sd = torch.load(ckpt,

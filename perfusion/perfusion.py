@@ -30,6 +30,9 @@ def set_submodule(module, submodule_name, new_submodule):
 
 
 class Perfusion(LatentDiffusion):
+
+    # latent model
+    # init_from_personalized_ckpt
     def __init__(
             self,
             personalization_config,
@@ -81,10 +84,17 @@ class Perfusion(LatentDiffusion):
 
     def init_from_personalized_ckpt(self, path):
         sd = torch.load(path, map_location="cpu")
+        key_names = sd.keys()
+        print(f'personalized ckpt keys: {key_names}')
+
         self.C_inv.data = sd['C_inv']
+
         self.target_input.data = sd['target_input']
+
         self.embedding_manager.load_state_dict(sd['embedding'])
-        self.model.diffusion_model.load_state_dict(sd['target_output'], strict=False)
+
+        self.model.diffusion_model.load_state_dict(sd['target_output'],
+                                                   strict=False)
 
     @rank_zero_only
     @torch.no_grad()
