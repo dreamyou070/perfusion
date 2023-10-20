@@ -216,8 +216,7 @@ if __name__ == "__main__":
     # step 5. load model
     parser.add_argument("--config", type=str, default="configs/perfusion_inference.yaml",
                         help="path to config which constructs model", )
-    parser.add_argument("--ckpt", type=str./ckpt/v1-5-pruned-emaonly.ckpt,
-                        default="", help="path to checkpoint of model", )
+    parser.add_argument("--ckpt", default="", help="path to checkpoint of model", )
     parser.add_argument("--personalized_ckpt", type=str, default='./ckpt/teddy.ckpt',
                         help="Paths to a pre-trained personalized checkpoint. With the form 'ckpt1,ckpt2,...'")
 
