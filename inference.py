@@ -63,60 +63,53 @@ def main(opt):
                                    personalized_ckpts)
     model = model.to(device)
 
-
-    """
+    print(f'\n step 7. using new sampler?')
     if opt.advanced_sampler:
         sampler_config = OmegaConf.load(f"{opt.sampler_config}")
         sampler_config.params.num_steps = opt.steps
         sampler_config.params.guider_config.params.scale = opt.scale
         sampler = instantiate_from_config(sampler_config)
-
         denoiser_config = OmegaConf.load(f"{opt.denoiser_config}")
         denoiser = instantiate_from_config(denoiser_config).to(device)
-
-        sample = lambda c, uc: (
-            advanced_sample(model.apply_model, denoiser, sampler, c, uc, batch_size, shape, device)
-        )
-
+        sample = lambda c, uc: (advanced_sample(model.apply_model, denoiser, sampler, c, uc, batch_size, shape, device))
     else:
         if opt.plms:
             sampler = PLMSSampler(model)
         else:
             sampler = DDIMSampler(model)
+        sample = lambda c, uc: (sampler.sample(S=opt.steps,conditioning=c,batch_size=batch_size,
+                                               shape=shape,verbose=False,
+                                               unconditional_guidance_scale=opt.scale,
+                                               unconditional_conditioning=uc,
+                                               eta=opt.ddim_eta,)[0])
 
-        sample = lambda c, uc: (
-            sampler.sample(
-                S=opt.steps,
-                conditioning=c,
-                batch_size=batch_size,
-                shape=shape,
-                verbose=False,
-                unconditional_guidance_scale=opt.scale,
-                unconditional_conditioning=uc,
-                eta=opt.ddim_eta,
-            )[0]
-        )
-
+    print(f'\n step 8. where to save')
     os.makedirs(opt.outdir, exist_ok=True)
     outpath = opt.outdir
 
+    print(f'\n step 9. display printed image')
     n_rows = opt.n_rows if opt.n_rows > 0 else batch_size
+
+    print(f'\n step 10. check prompt')
     if not opt.from_file:
         prompt = opt.prompt
         assert prompt is not None
         data = [batch_size * [prompt]]
-
     else:
         print(f"reading prompts from {opt.from_file}")
         with open(opt.from_file, "r") as f:
             data = f.read().splitlines()
             data = list(chunk(data, batch_size))
+    print(f' (10.1) base prompt data : {data}')
 
-    # prompts with placeholder word
+    print(f' (10.2) prompts with placeholder word')
+
     placeholders = list(model.embedding_manager.string_to_token_dict.keys())
     superclasses = model.embedding_manager.initializer_words
     data_concept = list()
     data_superclass = list()
+
+    """
     for i in range(len(data)):
         data_concept.append(list())
         data_superclass.append(list())
@@ -224,45 +217,42 @@ if __name__ == "__main__":
     parser.add_argument("--beta", type=str, default="0.7", help="bias used in gated rank-1 editing", )
     parser.add_argument("--tau", type=str, default="0.15", help="temperature used in gated rank-1 editing", )
 
+    # step 7. using new sampler
+    parser.add_argument("--advanced_sampler", action="store_true",
+                        help="use other advanced sampler through the sampler and denoiser configs.")
+    parser.add_argument("--sampler_config", type=str,
+                        default="configs/sampler/sampler.yaml", help="path to config which constructs sampler", )
+    parser.add_argument("--steps", type=int, default=50, help="number of sampling steps", )
+    parser.add_argument("--scale", type=float, default=7.5,
+                        help="unconditional guidance scale: eps = eps(x, empty) + scale * (eps(x, cond) - eps(x, empty))", )
+    parser.add_argument("--denoiser_config", type=str, default="configs/denoiser/denoiser.yaml",
+                        help="path to config which constructs sampler", )
+    parser.add_argument("--plms", action='store_true', help="use plms sampling", )
 
-
-
-
-    parser.add_argument("--prompt",type=str,nargs="?",default="photo of a {}",
-                        help="the prompt to render. Use {n} to distinguish different concepts.")
-    parser.add_argument("--outdir",type=str,nargs="?",help="dir to write results to",
+    # step 8.
+    parser.add_argument("--outdir", type=str, nargs="?", help="dir to write results to",
                         default="outputs/txt2img-samples")
+
+    # step 9. display printed image
+    parser.add_argument("--n_rows", type=int, default=0, help="rows in the grid (default: n_samples)", )
+
+    # step 10.
+    parser.add_argument("--from-file", type=str, help="if specified, load prompts from this file", )
+    parser.add_argument("--prompt", type=str, nargs="?", default="photo of a {}",
+                        help="the prompt to render. Use {n} to distinguish different concepts.")
+
+    # step 11.
     parser.add_argument("--skip_grid",action='store_true',
                         help="do not save a grid, only individual samples. Helpful when evaluating lots of samples",)
     parser.add_argument("--skip_save",action='store_true',
                         help="do not save individual samples. For speed measurements.",)
-    parser.add_argument("--steps",type=int,default=50,help="number of sampling steps",)
-    parser.add_argument("--plms", action='store_true',help="use plms sampling",)
     parser.add_argument("--fixed_code",action='store_true',help="if enabled, uses the same starting code across samples ",)
     parser.add_argument("--ddim_eta",type=float,default=0.0,help="ddim eta (eta=0.0 corresponds to deterministic sampling",)
     parser.add_argument("--n_iter",type=int,default=2,help="sample this often",)
-    parser.add_argument("--n_rows",type=int,default=0,help="rows in the grid (default: n_samples)",)
-    parser.add_argument("--scale",type=float,default=7.5,help="unconditional guidance scale: eps = eps(x, empty) + scale * (eps(x, cond) - eps(x, empty))",)
-
-    parser.add_argument("--from-file",type=str,help="if specified, load prompts from this file",)
-
-    parser.add_argument("--sampler_config",type=str,
-                        default="configs/sampler/sampler.yaml",help="path to config which constructs sampler",)
-    parser.add_argument("--denoiser_config",type=str,default="configs/denoiser/denoiser.yaml",
-                        help="path to config which constructs sampler",)
-
-
-    parser.add_argument(
-        "--precision",
-        type=str,
-        help="evaluate at this precision",
-        choices=["full", "autocast"],
-        default="autocast"
-    )
+    parser.add_argument("--precision",type=str,help="evaluate at this precision",
+                        choices=["full", "autocast"],default="autocast")
     parser.add_argument("--global_locking", action="store_true",
                         help="the superclass word for global locking. None for disable.")
-    parser.add_argument("--advanced_sampler",action="store_true",
-                        help="use other advanced sampler through the sampler and denoiser configs.")
     opt = parser.parse_args()
     main(opt)
 
