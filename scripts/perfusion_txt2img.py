@@ -22,7 +22,6 @@ from scripts.helpers import sample as advanced_sample
 
 def main():
     parser = argparse.ArgumentParser()
-
     parser.add_argument(
         "--prompt",
         type=str,
@@ -40,76 +39,63 @@ def main():
     parser.add_argument(
         "--skip_grid",
         action='store_true',
-        help="do not save a grid, only individual samples. Helpful when evaluating lots of samples",
-    )
+        help="do not save a grid, only individual samples. Helpful when evaluating lots of samples",    )
     parser.add_argument(
         "--skip_save",
         action='store_true',
-        help="do not save individual samples. For speed measurements.",
-    )
+        help="do not save individual samples. For speed measurements.",    )
     parser.add_argument(
         "--steps",
         type=int,
         default=50,
-        help="number of sampling steps",
-    )
+        help="number of sampling steps",    )
     parser.add_argument(
         "--plms",
         action='store_true',
-        help="use plms sampling",
-    )
+        help="use plms sampling",    )
     parser.add_argument(
         "--laion400m",
         action='store_true',
-        help="uses the LAION400M model",
-    )
+        help="uses the LAION400M model",    )
     parser.add_argument(
         "--fixed_code",
         action='store_true',
-        help="if enabled, uses the same starting code across samples ",
-    )
+        help="if enabled, uses the same starting code across samples ",    )
     parser.add_argument(
         "--ddim_eta",
         type=float,
         default=0.0,
-        help="ddim eta (eta=0.0 corresponds to deterministic sampling",
-    )
+        help="ddim eta (eta=0.0 corresponds to deterministic sampling",    )
     parser.add_argument(
         "--n_iter",
         type=int,
         default=2,
-        help="sample this often",
-    )
+        help="sample this often",    )
     parser.add_argument(
         "--H",
         type=int,
         default=512,
-        help="image height, in pixel space",
-    )
+        help="image height, in pixel space",    )
     parser.add_argument(
         "--W",
         type=int,
         default=512,
-        help="image width, in pixel space",
-    )
+        help="image width, in pixel space",    )
     parser.add_argument(
         "--C",
         type=int,
         default=4,
-        help="latent channels",
-    )
+        help="latent channels",    )
     parser.add_argument(
         "--f",
         type=int,
         default=8,
-        help="downsampling factor",
-    )
+        help="downsampling factor",    )
     parser.add_argument(
         "--n_samples",
         type=int,
         default=3,
-        help="how many samples to produce for each given prompt. A.k.a. batch size",
-    )
+        help="how many samples to produce for each given prompt. A.k.a. batch size",    )
     parser.add_argument(
         "--n_rows",
         type=int,
