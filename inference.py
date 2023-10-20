@@ -104,13 +104,14 @@ def main(opt):
 
     print(f' (10.2) prompts with placeholder word')
     placeholders = list(model.embedding_manager.string_to_token_dict.keys())
+    print(f' - presaved placeholders : {placeholders}')
     superclasses = model.embedding_manager.initializer_words
-    print(f' - placeholders : {placeholders}')
-    print(f' - superclasses : {superclasses}')
+    print(f' - presaved superclass : {superclasses}')
+
+
     data_concept = list()
     data_superclass = list()
 
-    """
     for i in range(len(data)):
         data_concept.append(list())
         data_superclass.append(list())
@@ -120,6 +121,8 @@ def main(opt):
                 target = f'{{{concept_i + 1}}}' if n_concepts > 1 else '{}'
                 prompt_concept = prompt_concept.replace(target, placeholders[concept_i])
                 prompt_superclass = prompt_superclass.replace(target, superclasses[concept_i])
+                print(f'prompt_concept : {prompt_concept}')
+                print(f'prompt_superclass : {prompt_superclass}')
             data_concept[i].append(prompt_concept)
             data_superclass[i].append(prompt_superclass)
 
@@ -131,7 +134,7 @@ def main(opt):
     start_code = None
     if opt.fixed_code:
         start_code = torch.randn([opt.n_samples, opt.C, opt.H // opt.f, opt.W // opt.f], device=device)
-
+    """
     precision_scope = autocast if opt.precision == "autocast" else nullcontext
     with torch.no_grad():
         with precision_scope(device):
