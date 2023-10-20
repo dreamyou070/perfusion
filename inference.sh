@@ -1,1 +1,1 @@
-python inference.py
+python inference.py --ckpt /data7/sooyeon/Pretrained_Model/stable-diffusion-v1-5/v1-5-pruned-emaonly.ckpt
