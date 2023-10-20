@@ -121,8 +121,8 @@ def main(opt):
                 target = f'{{{concept_i + 1}}}' if n_concepts > 1 else '{}'
                 prompt_concept = prompt_concept.replace(target, placeholders[concept_i])
                 prompt_superclass = prompt_superclass.replace(target, superclasses[concept_i])
-                print(f'prompt_concept : {prompt_concept}')
-                print(f'prompt_superclass : {prompt_superclass}')
+                # prompt_concept : photo of a *
+                # prompt_superclass : photo of a teddy
             data_concept[i].append(prompt_concept)
             data_superclass[i].append(prompt_superclass)
 
@@ -134,8 +134,9 @@ def main(opt):
     start_code = None
     if opt.fixed_code:
         start_code = torch.randn([opt.n_samples, opt.C, opt.H // opt.f, opt.W // opt.f], device=device)
-    """
+
     precision_scope = autocast if opt.precision == "autocast" else nullcontext
+
     with torch.no_grad():
         with precision_scope(device):
             with model.ema_scope():
@@ -145,19 +146,43 @@ def main(opt):
                     for data_i in tqdm(range(len(data_concept)), desc="data"):
                         prompts = data_concept[data_i]
                         prompts_superclass = data_superclass[data_i] if opt.global_locking else None
+                        # prompts : photo of a *
+                        # prompts_superclass : photo of a teddy
 
+
+                        # ------------------------------------------------------------------------------------------------
+                        # make unconditional condition
                         uc = None
                         if opt.scale != 1.0:
                             encoding_uc = model.get_learned_conditioning(batch_size * [""])
                             uc = dict(c_crossattn=encoding_uc,
                                       c_super=encoding_uc if opt.global_locking else None)
+
+                        # ------------------------------------------------------------------------------------------------
+                        # check prompt
                         if isinstance(prompts, tuple):
                             prompts = list(prompts)
-                        encoding = model.cond_stage_model.encode(prompts, embedding_manager=model.embedding_manager)
-                        encoding_superclass = model.get_learned_conditioning(prompts_superclass) if opt.global_locking else None
-                        c = dict(c_crossattn=encoding, c_super=encoding_superclass)
 
-                        z_samples = sample(c, uc)
+                        print(f' prompts right before sampling, prompts : {prompts}')
+
+                        # ------------------------------------------------------------------------------------------------
+                        # get text embedding
+                        # (1) prompt embedding
+                        encoding = model.cond_stage_model.encode(prompts,
+                                                                 embedding_manager=model.embedding_manager)
+                        # (2) superclass embedding
+                        encoding_superclass = model.get_learned_conditioning(prompts_superclass) if opt.global_locking else None
+                        c = dict(c_crossattn=encoding,
+                                 c_super=encoding_superclass)
+
+                        # ------------------------------------------------------------------------------------------------
+                        # (3) sampling (ddpm)
+                        print(f'sample : {sample.__class__.__name__}')
+                        z_samples = sample(c,
+                                           uc)
+
+                        # ------------------------------------------------------------------------------------------------
+                        # decoding after all timestep repeating loop
                         x_samples = model.decode_first_stage(z_samples)
                         x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
 
@@ -167,7 +192,6 @@ def main(opt):
                                 Image.fromarray(x_sample.astype(np.uint8)).save(
                                     os.path.join(sample_path, f"{base_count:05}.jpg"))
                                 base_count += 1
-
                         if not opt.skip_grid:
                             all_samples.append(x_samples)
 
@@ -190,7 +214,7 @@ def main(opt):
 
     print(f"Your samples are ready and waiting for you here: \n{outpath} \n"
           f" \nEnjoy.")
-    """
+    
 
 if __name__ == "__main__":
 
