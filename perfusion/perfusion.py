@@ -85,14 +85,25 @@ class Perfusion(LatentDiffusion):
     def init_from_personalized_ckpt(self, path):
         sd = torch.load(path, map_location="cpu")
         key_names = sd.keys()
-        print(f'personalized ckpt keys: {key_names}')
+
+        # 'C_inv',
+        # 'target_input',
+        # 'embedding',
+        # 'target_output'
+        # 'global_step',
 
         self.C_inv.data = sd['C_inv']
+        print(f'self.C_inv.data : {self.C_inv.data}')
 
         self.target_input.data = sd['target_input']
 
-        self.embedding_manager.load_state_dict(sd['embedding'])
 
+        self.embedding_manager.load_state_dict(sd['embedding'])
+        pretrained_embedding = sd['embedding']
+        print(f"sd['embedding'] : {type(pretrained_embedding)}")
+
+
+        # loading net Unet ... 
         self.model.diffusion_model.load_state_dict(sd['target_output'],
                                                    strict=False)
 
