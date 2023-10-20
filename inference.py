@@ -50,14 +50,21 @@ def main(opt):
         config.model.params.n_concepts = n_concepts
     else:
         personalized_ckpts = personalized_ckpts[0]
-    """
-    beta = [float(b) for b in opt.beta.split(',')]
-    tau = [float(t) for t in opt.tau.split(',')]
-    config.model.params.beta = beta if len(beta) > 1 else beta[0]
-    config.model.params.tau = tau if len(tau) > 1 else tau[0]
-    model = load_model_from_config(config, opt.ckpt, personalized_ckpts)
+
+    print(f'\n step 6. load model')
+    # what is mean of beta and tau
+    beta = [float(b) for b in opt.beta.split(',')]  # [0.7]
+    tau = [float(t) for t in opt.tau.split(',')]  # [0.15]
+    config.model.params.beta = beta if len(beta) > 1 else beta[0]  # beta = 0.7
+    config.model.params.tau = tau if len(tau) > 1 else tau[0]  # tau = 0.15
+    print(f' (6.1) loading model with personalized ckpt')
+    model = load_model_from_config(config,
+                                   opt.ckpt,
+                                   personalized_ckpts)
     model = model.to(device)
 
+
+    """
     if opt.advanced_sampler:
         sampler_config = OmegaConf.load(f"{opt.sampler_config}")
         sampler_config.params.num_steps = opt.steps
@@ -209,10 +216,19 @@ if __name__ == "__main__":
     # step 5. load model
     parser.add_argument("--config", type=str, default="configs/perfusion_inference.yaml",
                         help="path to config which constructs model", )
+    parser.add_argument("--ckpt", type=str,
+                        default="./ckpt/v1-5-pruned-emaonly.ckpt", help="path to checkpoint of model", )
     parser.add_argument("--personalized_ckpt", type=str, default='./ckpt/teddy.ckpt',
                         help="Paths to a pre-trained personalized checkpoint. With the form 'ckpt1,ckpt2,...'")
 
     # step 6.
+    parser.add_argument("--beta", type=str, default="0.7", help="bias used in gated rank-1 editing", )
+    parser.add_argument("--tau", type=str, default="0.15", help="temperature used in gated rank-1 editing", )
+
+
+
+
+
     parser.add_argument("--prompt",type=str,nargs="?",default="photo of a {}",
                         help="the prompt to render. Use {n} to distinguish different concepts.")
     parser.add_argument("--outdir",type=str,nargs="?",help="dir to write results to",
@@ -228,16 +244,14 @@ if __name__ == "__main__":
     parser.add_argument("--n_iter",type=int,default=2,help="sample this often",)
     parser.add_argument("--n_rows",type=int,default=0,help="rows in the grid (default: n_samples)",)
     parser.add_argument("--scale",type=float,default=7.5,help="unconditional guidance scale: eps = eps(x, empty) + scale * (eps(x, cond) - eps(x, empty))",)
-    parser.add_argument("--beta",type=str,default="0.7", help="bias used in gated rank-1 editing",)
-    parser.add_argument("--tau", type=str,default="0.15",help="temperature used in gated rank-1 editing",)
+
     parser.add_argument("--from-file",type=str,help="if specified, load prompts from this file",)
 
     parser.add_argument("--sampler_config",type=str,
                         default="configs/sampler/sampler.yaml",help="path to config which constructs sampler",)
     parser.add_argument("--denoiser_config",type=str,default="configs/denoiser/denoiser.yaml",
                         help="path to config which constructs sampler",)
-    parser.add_argument("--ckpt",type=str,
-                        default="./ckpt/v1-5-pruned-emaonly.ckpt", help="path to checkpoint of model",)
+
 
     parser.add_argument(
         "--precision",

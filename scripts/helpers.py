@@ -8,12 +8,16 @@ def chunk(it, size):
     return iter(lambda: tuple(islice(it, size)), ())
 
 
-def load_model_from_config(config, ckpt, personalized_ckpt, verbose=False):
+def load_model_from_config(config,
+                           ckpt,
+                           personalized_ckpt,
+                           verbose=False):
     model = instantiate_from_config(config.model)
-
+    print(f'model : {model.__class__.__name__}')
     print(f"Loading model from {ckpt} and {personalized_ckpt}")
-
-    pl_sd = torch.load(ckpt, map_location="cpu")
+    print(f' [1] loading basic ckpt')
+    pl_sd = torch.load(ckpt,
+                       map_location="cpu")
     if "global_step" in pl_sd:
         print(f"Global Step: {pl_sd['global_step']}")
     sd = pl_sd["state_dict"]
@@ -25,8 +29,8 @@ def load_model_from_config(config, ckpt, personalized_ckpt, verbose=False):
         print("unexpected keys:")
         print(u)
 
+    print(f' [2] initialized ckpt of personalized ckpt')
     model.init_from_personalized_ckpt(personalized_ckpt)
-
     model.cuda()
     model.eval()
     return model
